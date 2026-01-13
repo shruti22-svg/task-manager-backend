@@ -92,3 +92,13 @@ app.listen(PORT, () => {
 
 // https://task-manager-api-2-d2ti.onrender.com
 // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTY1ZjJjZjI0ZmYzMzBlY2NkNjJlMGYiLCJpYXQiOjE3NjgyODkzNTksImV4cCI6MTc2ODg5NDE1OX0.zdgSHRGx45MaM0_X3et4Y8WspYh6guDsy7YKXNHX-rs
+
+// Health check endpoint
+   app.get('/health', (req, res) => {
+     res.status(200).json({
+       status: 'OK',
+       timestamp: new Date().toISOString(),
+       uptime: process.uptime(),
+       environment: process.env.NODE_ENV
+     });
+   });
