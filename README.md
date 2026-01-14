@@ -655,7 +655,6 @@ GET /api/tasks/659xyz789abc012345678901
 | 500 | `"Server error"` | Database or server error |
 
 ---
-
 ### 🔒 Authentication Flow
 
 **Step-by-step guide to using the API:**
@@ -890,7 +889,7 @@ SOFTWARE.
 
 - GitHub: (https://github.com/shruti22-svg)
 - Email: shrutibhagavatham@gmail.com
-- LinkedIn: (https://linkedin.com/in/Shruti-Bhagavatham)
+- LinkedIn: (https://linkedin.com/in/Shruti-Bhagavatham-7053892a1)
 ---
 
 ## 🙏 Acknowledgments
