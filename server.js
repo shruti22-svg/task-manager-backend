@@ -1,45 +1,58 @@
-// Import Express library
-const express = require('express');
+/**
+ * TASK MANAGER API - Main Server File
+ * 
+ * This is the entry point of our backend application.
+ * It sets up Express server, connects to MongoDB, and configures middleware.
+ * 
+ * Author: Shruti
+ * Date: January 2024
+ * Version: 1.0.1
+ */
 
-// Import Mongoose library  
-const mongoose = require('mongoose');
+// ========================================
+// DEPENDENCIES
+// ========================================
+const express = require('express');        // Web framework
+const mongoose = require('mongoose');      // MongoDB ODM
+const dotenv = require('dotenv');          // Environment variables
+const cors = require('cors');              // Cross-origin requests
+const mongoSanitize = require('express-mongo-sanitize');  // Security
 
-// Import dotenv library
-const dotenv = require('dotenv');
+// Load environment variables from .env file
 dotenv.config();
-const isProduction = process.env.NODE_ENV == 'production';
 
-// Import CORS library
-const cors = require('cors');
+// ========================================
+// ENVIRONMENT CONFIGURATION
+// ========================================
+// Check if we're in production or development
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Import Models
-const User = require('./models/User');
-const Task = require('./models/Task');
-
-// Import Routes
-const authRoutes = require('./routes/auth');
-const taskRoutes = require('./routes/tasks');  // ← NEW LINE
-
-// Create Express application
+// ========================================
+// EXPRESS APP INITIALIZATION
+// ========================================
 const app = express();
 
-// Middleware: Parse JSON data from requests
+// ========================================
+// MIDDLEWARE CONFIGURATION
+// ========================================
+// Parse JSON request bodies
 app.use(express.json());
 
-// CORS configuration
+// Configure CORS (Cross-Origin Resource Sharing)
 const corsOptions = {
   origin: isProduction 
-    ? process.env.FRONTEND_URL  // Production: your frontend URL
-    : 'http://localhost:3000',   // Development: local frontend
-  credentials: true
+    ? process.env.FRONTEND_URL     // Production: specific frontend URL
+    : 'http://localhost:3000',      // Development: local React app
+  credentials: true                 // Allow cookies and auth headers
 };
 app.use(cors(corsOptions));
 
-// Get MongoDB connection string from .env file
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/taskmanager';
+// Sanitize user input to prevent NoSQL injection attacks
+app.use(mongoSanitize());
 
-// Connect to MongoDB database
-// MongoDB connection
+// ========================================
+// MONGODB CONNECTION
+// ========================================
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected successfully');
@@ -47,58 +60,55 @@ mongoose.connect(process.env.MONGO_URI)
   })
   .catch((err) => {
     console.error('❌ MongoDB connection error:', err.message);
-    process.exit(1);  // Exit if can't connect to database
+    process.exit(1);  // Exit app if database connection fails
   });
 
-// Use auth routes
-app.use('/api/auth', authRoutes);
-app.use('/api/tasks', taskRoutes);  // ← NEW LINE
+// ========================================
+// ROUTES
+// ========================================
+// Import route handlers
+const authRoutes = require('./routes/auth');
+const taskRoutes = require('./routes/tasks');
 
-// Create a test route (homepage)
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Task Management API is running!',
-    version: '1.0.0',
-    status: 'Server is running'
-  });
-});
+// Mount routes
+app.use('/api/auth', authRoutes);   // Authentication routes (register, login)
+app.use('/api/tasks', taskRoutes);  // Task CRUD routes
 
-// Test route to check models
-app.get('/test-models', (req, res) => {
+// Root route - API information
+app.get('/api', (req, res) => {
   res.json({
-    message: 'Models are working!',
-    models: {
-      User: 'User model loaded successfully',
-      Task: 'Task model loaded successfully'
+    message: 'Task Manager API',
+    version: '1.0.1',
+    status: 'Server is running',
+    endpoints: {
+      auth: '/api/auth (POST /register, POST /login)',
+      tasks: '/api/tasks (GET, POST, PUT, DELETE)'
     }
   });
 });
 
-// Get port number from .env file
-const PORT = process.env.PORT || 5000; 
+// Health check endpoint - used for monitoring
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV
+  });
+});
 
-// Start server
+// ========================================
+// SERVER STARTUP
+// ========================================
+const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
-  console.log(`\n Server is running!`);
-  console.log(` Port: ${PORT}`);
-  console.log(` Environment: ${isProduction ? 'Production' : 'Development'}`);
+  console.log(`\n🚀 Server is running!`);
+  console.log(`📡 Port: ${PORT}`);
+  console.log(`🌍 Environment: ${isProduction ? 'Production' : 'Development'}`);
   if (!isProduction) {
-    console.log(` Local URL: http://localhost:${PORT}`);
-    console.log(` API Docs: http://localhost:${PORT}/api`);
+    console.log(`🔗 Local URL: http://localhost:${PORT}`);
+    console.log(`📝 API Docs: http://localhost:${PORT}/api`);
   }
   console.log(`\n`);
 });
-
-
-// https://task-manager-api-2-d2ti.onrender.com
-// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTY1ZjJjZjI0ZmYzMzBlY2NkNjJlMGYiLCJpYXQiOjE3NjgyODkzNTksImV4cCI6MTc2ODg5NDE1OX0.zdgSHRGx45MaM0_X3et4Y8WspYh6guDsy7YKXNHX-rs
-
-// Health check endpoint
-   app.get('/health', (req, res) => {
-     res.status(200).json({
-       status: 'OK',
-       timestamp: new Date().toISOString(),
-       uptime: process.uptime(),
-       environment: process.env.NODE_ENV
-     });
-   });
